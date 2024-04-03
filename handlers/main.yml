@@ -1,0 +1,9 @@
+---
+
+- name: restart klipper
+  ansible.builtin.service:
+    name: klipper
+    state: restarted
+  become: '{{ do_become }}'
+
+...

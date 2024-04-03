@@ -1,0 +1,36 @@
+---
+
+do_become: true
+
+# Packages
+klipper_packages:
+  # Packages for python cffi
+  - libffi-dev
+  # kconfig requirements
+  - libncurses-dev
+  - libusb-dev
+  # AVR chip installation and building
+  - avrdude
+  - gcc-avr
+  - binutils-avr
+  - avr-libc
+  # ARM chip installation and building
+  - stm32flash
+  - dfu-util
+  - libnewlib-arm-none-eabi
+  - gcc-arm-none-eabi
+  - binutils-arm-none-eabi
+  - libusb-1.0-0
+
+# Configuration
+klipper_config_file: klipper.conf.j2
+
+# Directories
+klipper_src_directory: /home/{{ user }}/klipper
+klipper_venv_directory: /home/{{ user }}/klippy-env
+
+# Instance Parameters
+klipper_pip_umask: '{{ python_pip_umask }}'
+klipper_pip_environment: '{{ python_pip_environment }}'
+
+...

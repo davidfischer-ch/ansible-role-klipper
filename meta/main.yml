@@ -1,0 +1,9 @@
+---
+
+dependencies:
+  - role: github
+    tags: [klipper, dependencies]
+
+  - role: python
+    tags: [klipper, dependencies]
+...

@@ -1,0 +1,4 @@
+# Configuration for /etc/init.d/klipper
+KLIPPY_USER={{ user }}
+KLIPPY_EXEC={{ klipper_venv_directory }}/bin/python
+KLIPPY_ARGS="{{ klipper_src_directory }}/klippy/klippy.py /home/{{ user }}/printer.cfg -l /tmp/klippy.log"

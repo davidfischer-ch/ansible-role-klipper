@@ -1,0 +1,60 @@
+---
+# https://www.klipper3d.org/fr/Installation.html
+# Translated from https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh
+
+- block:
+    - name: Install Klipper packages
+      ansible.builtin.package:
+        name: '{{ klipper_packages }}'
+        state: present
+  become: '{{ do_become }}'
+  tags: packages
+
+- block:
+    - name: Clone Klipper
+      ansible.builtin.git:
+        repo: https://github.com/Klipper3d/klipper
+        dest: '{{ klipper_src_directory }}'
+        force: true
+        version: '{{ klipper_version }}'
+
+    - name: Install Klipper requirements into virtualenv
+      ansible.builtin.pip:
+        requirements: '{{ klipper_src_directory }}/scripts/klippy-requirements.txt'
+        state: forcereinstall
+        umask: '{{ klipper_pip_umask }}'
+        virtualenv: '{{ klipper_venv_directory }}'
+        virtualenv_python: '{{ klipper_python_executable }}'
+      environment: '{{ klipper_pip_environment }}'
+
+    - name: Configure Klipper
+      ansible.builtin.template:
+        src: '{{ klipper_config_file }}'
+        dest: /etc/default/klipper
+        owner: root
+        group: '{{ user }}'
+        mode: '0640'
+      become: '{{ do_become }}'
+      tags: config
+
+    - name: Configure Klipper service
+      ansible.builtin.copy:
+        src: '{{ klipper_src_directory }}/scripts/klipper-start.sh'
+        dest: /etc/init.d/klipper
+        remote_src: true
+      become: '{{ do_become }}'
+      tags: config
+  notify: restart klipper
+  tags: update
+
+- name: Start Klipper service
+  ansible.builtin.service:
+    name: klipper
+    enabled: true
+    state: started
+  become: '{{ do_become }}'
+  tags: services
+
+# http://docs.zerog.one/klipper/mainsail/theme TODO !
+
+...
