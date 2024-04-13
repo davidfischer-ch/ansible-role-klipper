@@ -7,6 +7,13 @@
       ansible.builtin.package:
         name: '{{ klipper_packages }}'
         state: present
+      register: _klipper_packages
+
+    # https://github.com/Klipper3d/klipper/pull/4635
+    - name: Allow release info changes when installing on Octoprint
+      ansible.builtin.command:
+        apt-get update --allow-releaseinfo-change
+      when: _klipper_packages is changed
   become: '{{ do_become }}'
   tags: packages
 
@@ -31,6 +38,16 @@
       ansible.builtin.template:
         src: '{{ klipper_config_file }}'
         dest: /etc/default/klipper
+        owner: root
+        group: '{{ user }}'
+        mode: '0640'
+      become: '{{ do_become }}'
+      tags: config
+
+    - name: Configure Klipper printer
+      ansible.builtin.template:
+        src: '{{ klipper_printer_file }}'
+        dest: '{{ klipper_printer_config }}'
         owner: root
         group: '{{ user }}'
         mode: '0640'

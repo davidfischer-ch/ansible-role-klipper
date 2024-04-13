@@ -5,6 +5,7 @@
       ansible.builtin.assert:
         that:
           - klipper_python_executable is defined
+          - klipper_printer_file is defined
   tags: always
 
 ...

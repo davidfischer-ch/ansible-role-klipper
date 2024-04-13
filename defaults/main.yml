@@ -28,6 +28,7 @@ klipper_config_file: klipper.conf.j2
 # Directories
 klipper_src_directory: /home/{{ user }}/klipper
 klipper_venv_directory: /home/{{ user }}/klippy-env
+klipper_printer_config: /home/{{ user }}/printer.cfg
 
 # Instance Parameters
 klipper_pip_umask: '{{ python_pip_umask }}'
