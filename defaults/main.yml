@@ -21,6 +21,14 @@ klipper_packages:
   - gcc-arm-none-eabi
   - binutils-arm-none-eabi
   - libusb-1.0-0
+  # Input Shaping - https://www.klipper3d.org/Measuring_Resonances.html
+  - python3-numpy
+  - python3-matplotlib
+  - libatlas-base-dev
+  - libopenblas-dev
+klipper_python_packages:
+  # Input Shaping - https://www.klipper3d.org/Measuring_Resonances.html
+  - numpy
 
 # Configuration
 klipper_config_file: klipper.conf.j2

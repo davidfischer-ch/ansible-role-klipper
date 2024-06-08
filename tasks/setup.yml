@@ -34,6 +34,15 @@
         virtualenv_python: '{{ klipper_python_executable }}'
       environment: '{{ klipper_pip_environment }}'
 
+    - name: Install Klipper Python packages into virtualenv
+      ansible.builtin.pip:
+        name: '{{ klipper_python_packages }}'
+        state: forcereinstall
+        umask: '{{ klipper_pip_umask }}'
+        virtualenv: '{{ klipper_venv_directory }}'
+        virtualenv_python: '{{ klipper_python_executable }}'
+      environment: '{{ klipper_pip_environment }}'
+
     - name: Configure Klipper
       ansible.builtin.template:
         src: '{{ klipper_config_file }}'
