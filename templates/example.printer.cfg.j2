@@ -1,0 +1,809 @@
+# Zero G Mercury One.1 Modded Ender 5 Pro
+# With a BIGTREETECH SKR Mini E3 v3 Motherboard
+# LDO Orbiter 2.0 and Phateus Rapido 2 Plus HF
+# https://github.com/Klipper3d/klipper/blob/master/config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
+# Serial Number 2.1.146
+
+# This file contains common pin mappings for the BIGTREETECH SKR mini
+# E3 v3.0. To use this config, the firmware should be compiled for the
+# STM32G0B1 with a "8KiB bootloader" and USB communication.
+
+# The "make flash" command does not work on the SKR mini E3. Instead,
+# after running "make", copy the generated "out/klipper.bin" file to a
+# file named "firmware.bin" on an SD card and then restart the SKR
+# mini E3 with that SD card.
+
+# Config   : https://www.klipper3d.org/Config_Reference.html
+# Status   : https://www.klipper3d.org/Status_Reference.html
+# G-Codes  : https://www.klipper3d.org/G-Codes.html
+# Template : https://www.klipper3d.org/Command_Templates.html
+
+
+# Core ---------------------------------------------------------------------------------------------
+
+
+# Micro-controller configuration
+
+[mcu]
+
+serial: /dev/serial/by-id/usb-Klipper_stm32g0b1xx_190017001450415833323520-if00
+# restart_method: command
+
+[printer]
+
+kinematics: corexy
+max_velocity:  300 # mm/s  TODO Fine Tune
+max_accel:    3000 # mm/s² TODO Fine Tune
+max_z_velocity:  5 # mm/s  TODO Fine Tune
+max_z_accel:    50 # mm/s² TODO Fine Tune
+
+minimum_cruise_ratio:   0.5 # default
+square_corner_velocity: 5.0 # mm/s default
+
+[board_pins]
+aliases:
+    # EXP1 header
+    EXP1_1=PB5,  EXP1_3=PA9,   EXP1_5=PA10, EXP1_7=PB8, EXP1_9=<GND>,
+    EXP1_2=PA15, EXP1_4=<RST>, EXP1_6=PB9,  EXP1_8=PD6, EXP1_10=<5V>
+
+
+# Axis ---------------------------------------------------------------------------------------------
+
+
+# https://wiki.fisch3r.net/Inventaire/Impression%203D/Zero%20G%20Mercury%20One/#stepper-motors
+
+# you need to calculate the run_current value using the equation
+# (rated_motor_current * 0.707 = Maximum_run_current)
+# start with a value that is about 60%-70% of your maximum value
+
+# The TMC driver interpolate setting may reduce the audible noise of printer movement
+# at the cost of introducing a small systemic positional error.
+
+[stepper_x]
+step_pin:               PB13
+dir_pin:               !PB12
+enable_pin:            !PB14
+endstop_pin:            ^PC0
+microsteps:               16
+full_steps_per_rotation: 200 # mm
+rotation_distance:     39.96 # mm Califlower 2024-05-06
+position_min:              0 # mm
+position_endstop:        225 # mm
+position_max:            225 # mm 235-10
+homing_speed:             50 # mm/s
+
+[tmc2209 stepper_x]
+tx_pin:             PC10
+uart_pin:           PC11
+uart_address:          0
+run_current:        1.60 # Amps RMS - Max=1.7677
+sense_resistor:     0.11 # Ohms
+stealthchop_threshold: 0 # TODO 999999
+
+[stepper_y]
+step_pin:               PB10
+dir_pin:                !PB2
+enable_pin:            !PB11
+endstop_pin:            ^PC1
+microsteps:               16
+full_steps_per_rotation: 200 # mm
+rotation_distance:     39.96 # mm Califlower 2024-05-06
+position_min:              0 # mm
+position_endstop:        225 # mm
+position_max:            225 # mm 235-10
+homing_speed:             50 # mm/s
+
+[tmc2209 stepper_y]
+tx_pin:             PC10
+uart_pin:           PC11
+uart_address:          2
+run_current:        1.60 # Amps RMS - Max=1.7677
+sense_resistor:     0.11 # Ohms
+stealthchop_threshold: 0 # TODO 999999
+
+[stepper_z]
+step_pin:                PB0
+dir_pin:                !PC5
+enable_pin:             !PB1
+endstop_pin:             probe:z_virtual_endstop # ^PC2
+microsteps:               16
+full_steps_per_rotation: 200 # mm
+rotation_distance:         4 # mm
+# position_endstop:        0 # mm
+position_max:            325 # mm
+homing_speed:             10 # mm/s
+homing_retract_dist:       3 # mm
+second_homing_speed:       3 # mm/s
+
+{% if probe_calibrate|bool %}
+# See https://github.com/Klipper3d/klipper/issues/1831
+position_min: -1 # mm Enable this when calibrating Z-Offset
+{% endif %}
+
+[tmc2209 stepper_z]
+tx_pin:             PC10
+uart_pin:           PC11
+uart_address:          1
+run_current:       0.650 # Amps RMS - Max=0.707
+sense_resistor:     0.11 # Ohms
+stealthchop_threshold: 999999
+
+
+# Extruders ----------------------------------------------------------------------------------------
+
+
+[extruder]
+step_pin:                   PB3
+dir_pin:                   !PB4
+enable_pin:                !PD1
+microsteps:                  16
+full_steps_per_rotation:    200 # mm
+rotation_distance:        4.699 # mm Fine tuned following Elli's Print Guide
+nozzle_diameter:            0.4 # mm
+filament_diameter:         1.75 # mm
+max_extrude_only_distance:  500 # mm of raw filament
+max_extrude_only_velocity:  120 # mm/s
+
+# Fine tuned with Pressure Advance Square Tower
+# Filament eSUN PLA+ Rouge Pompier
+pressure_advance:             0.068
+pressure_advance_smooth_time:  0.03 # Default is 0.04
+
+# Heater
+heater_pin:       PC9
+sensor_pin:       PA0
+sensor_type:   PT1000
+control:          pid
+pid_Kp:        22.964 # Tuned for 210°C with FAN 100%
+pid_Ki:         3.002
+pid_Kd:        43.919
+min_temp:          15 # °C
+max_temp:         350 # °C  # 390 ?
+min_extrude_temp: 180 # °C
+
+[tmc2209 extruder]
+uart_pin:           PC11
+tx_pin:             PC10
+uart_address:          3
+run_current:        0.85 # Amps RMS
+sense_resistor:     0.11 # Ohms
+stealthchop_threshold: 0
+driver_TBL:            0
+driver_HEND:           6
+driver_HSTRT:          7
+driver_TOFF:           4
+
+
+# Fans ---------------------------------------------------------------------------------------------
+
+
+# Part Cooling Fan (FAN0/PC6)
+# Controlled by the slicer / gcode commands
+# https://www.klipper3d.org/Config_Reference.html#fans
+[fan]
+pin: PC6
+
+# Hot-end Heat Sink Fan (FAN2/PB15)
+# Turn on at full speed when the hot-end is above 50 °C
+# https://www.klipper3d.org/Config_Reference.html#heater_fan
+[heater_fan hotend_fan]
+pin: PB15
+
+# Electronic Enclosure Fan (FAN1/PC7)
+# Turn on automatically whenever any driver is enabled
+# Turn off (or reduce to idle speed) 60 seconds after drivers are turned off
+[controller_fan electronic_cooling_fan]
+pin: PC7
+idle_timeout: 60
+
+
+# Heated Bed ---------------------------------------------------------------------------------------
+
+
+[heater_bed]
+heater_pin:  PC8
+sensor_type: ATC Semitec 104GT-2 # EPCOS 100K B57560G104F
+sensor_pin:  PC4
+control:     pid
+pid_Kp:   69.568 # Tuned for 60°C with FAN 100% at 5 cm
+pid_Ki:    1.674
+pid_Kd:  722.638
+min_temp:      0 # °C
+max_temp:    130 # °C
+
+
+# Bed Level Support --------------------------------------------------------------------------------
+
+
+[bltouch]
+sensor_pin: ^PC14
+control_pin:  PA1
+x_offset:     -27 # mm 115-88
+y_offset:     -21 # mm 115-94
+z_offset:   2.835 # mm Z-Offset 2024-06-25
+
+# https://www.klipper3d.org/Bed_Mesh.html
+[bed_mesh]
+algorithm:         bicubic
+speed:                 120 # mm/s
+horizontal_move_z:       5 # mm
+mesh_min:           3,   9 # mm Approx 10/10 mm from corner ( 30-27,  30-21)
+mesh_max:         198, 204 # mm Approx 27/27 mm from corner (225-27, 225-21)
+mesh_pps:           2,   2 # number of points per segment to interpolate in the mesh along each axis
+probe_count:        5,   5
+
+[bed_screws]
+screw1: 30,30
+screw2: 200,30
+screw3: 30,195
+screw4: 200,195
+screw1_name: Front left screw
+screw2_name: Rear left screw
+screw3_name: Rear right screw
+screw4_name: Front right screw
+
+# Enable Skew Correction
+[skew_correction]
+
+# [z_thermal_adjust]
+
+
+# Customize Homing ---------------------------------------------------------------------------------
+
+
+[safe_z_home]
+home_xy_position: 139.5, 133.5 # Home - bltouch offsets (112.5+27, 112.5+21)
+speed:                      50 # mm/s (250 mm/s ??)
+z_hop:                      10 # mm  Move up
+z_hop_speed:                 5 # mm/s
+
+# [homing_override]
+# [endstop_phase]
+
+
+# LCD Display --------------------------------------------------------------------------------------
+
+# Using the stock ST7920 LCD (Ender 3 Pro/CR10) with the SKR MINI E3 V3
+
+[display]
+lcd_type:    st7920
+cs_pin:      EXP1_7
+click_pin: ^!EXP1_2
+sclk_pin:    EXP1_6
+sid_pin:     EXP1_8
+encoder_pins: ^EXP1_5, ^EXP1_3
+
+
+# Beeper -------------------------------------------------------------------------------------------
+
+
+[pwm_cycle_time BEEPER_pin]
+pin:            EXP1_1
+value:          0 # Silent at power on, set to 1 if active low
+shutdown_value: 0 # Disable at emergency shutdown (no PWM would be available anyway)
+cycle_time: 0.001 # Default PWM frequency : 0.001 = 1 ms will give a tone of 1 kHz
+
+
+# Enable Respond Command
+[respond]
+
+
+{% raw %}
+
+[gcode_macro M300]
+description:
+    Play tone. Beeper support, as commonly found on usual LCD displays (i.e. RepRapDiscount 2004
+    Smart Controller, RepRapDiscount 12864 Full Graphic).
+
+    This defines a custom I/O pin and a custom GCODE macro.
+
+    Usage:
+
+    M300 [P<ms>] [S<Hz>]
+
+    P is the tone duration, S the tone frequency.
+    The frequency won't be pitch perfect.
+gcode:
+    {% set S = params.S|default(1000)|int %} # Use a default 1 kHz tone if S is omitted.
+    {% set P = params.P|default(100)|int %}  # Use a 10 ms duration is P is omitted.
+    SET_PIN PIN=BEEPER_pin VALUE=0.5 CYCLE_TIME={ 1.0/S if S > 0 else 1 }
+    G4 P{P}
+    SET_PIN PIN=BEEPER_pin VALUE=0
+
+{% endraw %}
+
+{% if adxl_enabed|bool %}
+
+# Input Shapping -----------------------------------------------------------------------------------
+
+# Modified from https://github.com/bigtreetech/ADXL345/blob/master/Firmware/sample-bigtreetech-adxl345-v2.0.cfg
+
+# This file contains common pin mappings for the bigtreetech adxl345 v2.0
+# To use this config, the firmware should be compiled for the
+# RP2040 with "USB"
+# The micro-controller will be used to control the components on the nozzle.
+
+# See docs/Config_Reference.md for a description of parameters.
+
+[mcu btt_adxl345]
+serial: /dev/serial/by-id/usb-Klipper_rp2040_454741505C0934BA-if00
+
+[adxl345]
+cs_pin: btt_adxl345:gpio9
+#spi_bus: spi1a
+spi_software_sclk_pin: btt_adxl345:gpio10
+spi_software_mosi_pin: btt_adxl345:gpio11
+spi_software_miso_pin: btt_adxl345:gpio8
+axes_map: -x,-y,-z
+
+[resonance_tester]
+max_smoothing: 0.20
+probe_points: 112.5, 112.5, 20
+accel_chip: adxl345
+
+# [adxl345_probe]
+# probe_pin: btt_adxl345:gpio4  # or btt_adxl345:gpio3 for `int2`
+# int_pin: int1 # select either int1 or int2
+# tap_thresh: 12000 # this needs to be tuned
+# tap_dur: 0.01 # this needs to be tuned
+# speed: 20 # this needs to be tuned
+# # Adjust this to your liking
+# samples: 3
+# sample_retract_dist: 3.0
+# samples_result: median
+# samples_tolerance: 0.01
+# samples_tolerance_retries: 20
+
+{% else %}
+
+[input_shaper]
+
+# Resonances Measures 2024-06-15 08:42:46
+
+shaper_type_x: 2hump_ei
+shaper_freq_x: 39 # Hz
+
+shaper_type_y: ei
+shaper_freq_y: 119.4 # Hz
+
+##  Damping ratios of vibrations of X and Y axes used by input shapers
+##  to improve vibration suppression. Default value is 0.1 which is a
+##  good all-round value for most printers. In most circumstances this
+##  parameter requires no tuning and should not be changed.
+#damping_ratio_x: 0.1
+#damping_ratio_y: 0.1
+
+{% endif %}
+
+
+# Extra Scripts ====================================================================================
+
+# https://gist.github.com/kmobs/f6def5db272ca5c1b81727482f53bed8
+
+[resonance_holder]
+
+
+# Macros ===========================================================================================
+
+# https://gist.github.com/ExtNeon/e582111d5ffd0a44a0e28c425b5d092b
+# https://www.reddit.com/r/klippers/comments/qdr0g9/my_gcode_macro_to_mesh_level_the_bed_every_10th/
+# https://www.reddit.com/r/klippers/comments/18rsrto/how_do_i_make_a_good_pauseresume_macro_for/
+{% raw %}
+
+# Setup & Maintenance Macros -----------------------------------------------------------------------
+
+
+[gcode_macro POWER_ON]
+description: Ensure printer is powered on and firmware ready
+gcode:
+    RESPOND MSG='POWER_ON - TODO'
+    # {% if not %}
+    # RESPOND MSG='POWER_ON - Already powered on!'
+    # {% else %}
+    # RESPOND MSG='POWER_ON - Powering on...'
+    # RESPOND MSG='POWER_ON - Ready!'
+    # {% endif %}
+
+
+[delayed_gcode SETUP_CONFIG]
+initial_duration: 1.
+gcode:
+    G21        # Millimeter units
+    G90        # Absolute coordinates
+    M220 S100  # Set feedrate percentage (reset to 100 %)
+    M221 S100  # Set flow percentage (reset to 100 %)
+
+    # Not known by Klipper -
+    # M207 S1.5 F7200 Z0.2  # Set firmware retraction (mm, mm/min, Z-lift mm)
+    # M350 E16 I1           # Set micro-stepping to 16 with interpolation
+
+    SET_GCODE_OFFSET Z=0.0  # Reset the G-Code Z offset (adjust Z offset if needed)
+
+    SET_SKEW XY=100.07,100.26,70.7  # Skew correction from Califlower 2024-05-06
+
+    RESPOND MSG='SETUP_CONFIG - Setup done!'
+
+
+[gcode_macro DO_BED_MESH]
+description: Home, then collect and report bed mesh leveling points
+gcode:
+    G28                  # Home print head
+    @BEDLEVELVISUALIZER  # Instruct plugin to start recording responses from printer
+    BED_MESH_CALIBRATE   # Collect the bed leveling mesh points
+    BED_MESH_OUTPUT      # Report the bed leveling mesh points
+
+
+[gcode_macro PRIME_NOZZLE]
+gcode:
+    SAVE_GCODE_STATE NAME=PRIME_NOZZLE_state
+
+    RESPOND MSG='PRIME_NOZZLE - Preparing...'
+
+    G90                             # Absolute coordinates
+    M83                             # Relative extruder mode
+    G92 E0                          # Reset extruder
+    G1 Z2                           # Move Z axis up 2 mm
+    G1 X2.0 Y20  Z0.28 F5000        # Move to start position
+    G1 X2.0            F7200 E1.5   # Extrude filament 1.5 mm (how much it retracted in END_PRINT)
+    G1 X2.0 Y200 Z0.28 F1500 E15    # Draw the first line
+    G1 X2.4 Y200 Z0.28 F5000        # Move to side a little
+    G1 X2.4 Y20  Z0.28 F1500 E30    # Draw the second line
+    G1                 F7200 E-0.5  # Retract to avoid stringing
+    G1 Z2                           # Move Z axis up 2 mm
+    G92 E0                          # Reset extruder
+
+    RESPOND MSG='PRIME_NOZZLE - Nozzle primed'
+
+    RESTORE_GCODE_STATE NAME=PRIME_NOZZLE_state
+
+
+[gcode_macro CHANGE_FILAMENT]
+description: Prepare printer for maintenance (home, move nozzle front and up 5 cm, preheat hot-end)
+gcode:
+    # Default to PLA+ Temperatures
+    {% set extruder_temp = params.EXTRUDER_TEMP|default(210)|float %}
+    {% set X = (printer.toolhead.axis_minimum.x|float + printer.toolhead.axis_maximum.x|float) / 2 %}
+    {% set Y = printer.toolhead.axis_maximum.y|float - 10 %}
+
+    RESPOND MSG='CHANGE_FILAMENT - Preparing...'
+
+    {% if printer.homed_axes != 'XYZ' %}
+    G28  # Home print head
+    {% endif %}
+
+    G90                   # Absolute coordinates
+    G1 Z50                # Set Z axis to 5 cm
+    G1 X{X} Y{Y}          # Center on X, go back on Y
+    M109 S{extruder_temp} # Set and wait for nozzle to reach temperature
+
+    RESPOND MSG='CHANGE_FILAMENT - You can now change filament'
+
+
+# https://klipperscreen.readthedocs.io/en/latest/macros/#load_filament-unload_filament
+[gcode_macro LOAD_FILAMENT]
+description: Load filament then purge nozzle a little bit
+variable_load_distance:  80 # mm
+variable_purge_distance: 25 # mm
+variable_load_speed:    600 # mm/min
+variable_purge_speed:   300 # mm/min
+gcode:
+    SAVE_GCODE_STATE NAME=LOAD_FILAMENT_state
+    G91                                  # Relative coordinates
+    G92 E0                               # Reset extruder
+    G1 E{load_distance}  F{load_speed}   # Load filament
+    G1 E{purge_distance} F{purge_speed}  # Purge nozzle
+    RESTORE_GCODE_STATE NAME=LOAD_FILAMENT_state
+
+
+# https://klipperscreen.readthedocs.io/en/latest/macros/#load_filament-unload_filament
+[gcode_macro UNLOAD_FILAMENT]
+description: Purge nozzle then unload filament
+variable_unload_distance: 80 # mm
+variable_purge_distance:  25 # mm
+variable_unload_speed:  1200 # mm/min
+variable_purge_speed:    300 # mm/min
+gcode:
+    SAVE_GCODE_STATE NAME=UNLOAD_FILAMENT_state
+    G91                                     # Relative coordinates
+    G92 E0                                  # Reset extruder
+    G1 E{purge_distance}   F{purge_speed}   # Purge nozzle
+    G1 E-{unload_distance} F{unload_speed}  # Unload filament
+    RESTORE_GCODE_STATE NAME=UNLOAD_FILAMENT_state
+
+
+# Start & End Print Macros -------------------------------------------------------------------------
+
+
+[pause_resume]
+# https://github.com/Klipper3d/klipper/blob/master/klippy/extras/pause_resume.py
+
+# Replace the slicer's custom start and end g-code scripts with START_PRINT and END_PRINT.
+# See https://www.klipper3d.org/Slicers.html for more information on using these macros.
+
+# Prime line if required -> https://community.ultimaker.com/topic/34019-the-first-line/
+
+
+[gcode_macro START_PRINT]
+description: Ensure printer is ready to print (setup config, home, start heating, bed mesh, purge line)
+variable_is_printing: False
+variable_extruder_temp: 0.0
+variable_bed_temp: 0.0
+gcode:
+    # Guard to be idempotent
+    {% if printer["gcode_macro START_PRINT"].is_printing %}
+    RESPOND MSG='START_PRINT - Already printing...'
+    {% else %}
+
+    # Default to PLA+ Temperatures
+    {% set bed_temp = params.BED_TEMP|default(60)|float %}
+    {% set extruder_temp = params.EXTRUDER_TEMP|default(210)|float %}
+
+    SET_GCODE_VARIABLE MACRO=START_PRINT VARIABLE=bed_temp      VALUE={bed_temp}
+    SET_GCODE_VARIABLE MACRO=START_PRINT VARIABLE=extruder_temp VALUE={extruder_temp}
+
+    # FIXME How to print with variable content?
+    RESPOND MSG="{'START_PRINT - Setting bed to '+bed_temp|string+' °C'}"
+    RESPOND MSG="{'START_PRINT - Setting extruder to '+extruder_temp|string+' °C'}"
+    RESPOND MSG='START_PRINT - Preparing to print...'
+
+    POWER_ON     # Make sure the printer is powered on
+    CLEAR_PAUSE  # Make sure the paused state is cleared
+
+    M117 Print started...  # Print message on LCD
+    M140 S{bed_temp}       # Start bed heating
+    M190 S{bed_temp}       # Wait for bed to reach temperature
+    M109 S{extruder_temp}  # Set and wait for nozzle to reach temperature
+
+    DO_BED_MESH
+
+    PRIME_NOZZLE
+
+    G92 E0  # Reset extruder
+
+    SET_GCODE_VARIABLE MACRO=START_PRINT VARIABLE=is_printing VALUE=True
+
+    RESPOND MSG='START_PRINT - Ready For Action!'
+
+    {% endif %}
+
+
+[gcode_macro CANCEL_PRINT]
+description: Tear down printer (turn off fans & heaters, park nozzle, disable steppers)
+rename_existing: _KLIPPER_CANCEL_PRINT
+gcode:
+    _KLIPPER_CANCEL_PRINT
+    END_PRINT
+
+
+[gcode_macro END_PRINT]
+description: Tear down printer (turn off fans & heaters, park nozzle, disable steppers)
+gcode:
+    # Guard to be idempotent
+    {% if not printer["gcode_macro START_PRINT"].is_printing %}
+    RESPOND MSG='END_PRINT - Already not printing.'
+    {% else %}
+
+    RESPOND MSG='END_PRINT - Ending print...'
+
+    CLEAR_PAUSE  # Make sure the paused state is cleared
+
+    {% if printer.extruder.can_extrude %}
+    G91             # Relative coordinates
+    G1 E-1.5 F7200  # Retract a little bit
+    G90             # Absolute coordinates
+    {% endif %}
+
+    G28 R10 X Y  # Raise and park the nozzle
+    M84          # Disable steppers
+
+    TURN_OFF_HEATERS  # Make sure the heaters are turned off
+
+    SET_GCODE_VARIABLE MACRO=START_PRINT VARIABLE=bed_temp      VALUE=0.0
+    SET_GCODE_VARIABLE MACRO=START_PRINT VARIABLE=extruder_temp VALUE=0.0
+    SET_GCODE_VARIABLE MACRO=START_PRINT VARIABLE=is_printing VALUE=False
+
+    RESPOND MSG="END_PRINT - That's All Folks!"
+
+    {% endif %}
+
+
+# Filament Change Macro (M600) ---------------------------------------------------------------------
+
+
+# TODO
+#
+# [gcode_macro M600]
+# description: |
+#     M600: Filament Change. This macro will pause the printer, move the tool to the change position,
+#     and retract the filament 50mm. Adjust the retraction settings for your own extruder. After
+#     filament has been changed, the print can be resumed from its previous position with "RESUME".
+#
+#     Macro: https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg#L87C1-L113C40
+# gcode:
+#     {% set X = params.X|default(10)|float %}
+#     {% set Y = params.Y|default(10)|float %}
+#     {% set Z = params.Z|default(10)|float %}
+#     SAVE_GCODE_STATE NAME=M600_state
+#     PAUSE
+#     G91
+#     G1 E-.8 F2700
+#     G1 Z{Z}
+#     G90
+#     G1 X{X} Y{Y} F3000
+#     G91
+#     G1 E-50 F1000
+#     RESTORE_GCODE_STATE NAME=M600_state
+
+
+# Measuring Resonance to Tune Input Shaping --------------------------------------------------------
+
+
+[gcode_macro PREPARE_RESONANCE_MEASURE]
+description: Prepare printer for measuring resonance (home, move nozzle up 2 cm)
+gcode:
+    {% set X = (printer.toolhead.axis_minimum.x|float + printer.toolhead.axis_maximum.x|float) / 2 %}
+    {% set Y = (printer.toolhead.axis_minimum.y|float + printer.toolhead.axis_maximum.y|float) / 2 %}
+
+    RESPOND MSG='PREPARE_RESONANCE_MEASURE - Preparing...'
+
+    G28          # Home print head
+    G90          # Absolute coordinates
+    G1 Z20       # Set Z axis to 2 cm
+    G1 X{X} Y{Y} # Center on X, go back on Y
+
+    RESPOND MSG='PREPARE_RESONANCE_MEASURE - You can now take measurements'
+
+
+# Determining Absolute Maximum X & Y Axis Speed ----------------------------------------------------
+
+
+[gcode_macro TEST_SPEED]
+description: |
+    Home, get position, throw around tool-head, home again.
+
+    If MCU stepper positions (first line in GET_POSITION) are greater than a full step different
+    (your number of micro-steps), then skipping occurred. We only measure to a full step to
+    accommodate for end-stop variance.
+
+    Example: TEST_SPEED SPEED=300 ACCEL=5000 ITERATIONS=10
+
+    Article: https://ellis3dp.com/Print-Tuning-Guide/articles/determining_max_speeds_accels.html
+    Macro: https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/macros/TEST_SPEED.cfg
+gcode:
+    # Speed
+    {% set speed = params.SPEED|default(printer.configfile.settings.printer.max_velocity)|int %}
+    # Iterations
+    {% set iterations = params.ITERATIONS|default(5)|int %}
+    # Acceleration
+    {% set accel  = params.ACCEL|default(printer.configfile.settings.printer.max_accel)|int %}
+    # Bounding inset for large pattern (helps prevent slamming the toolhead into the sides after small skips, and helps to account for machines with imperfectly set dimensions)
+    {% set bound = params.BOUND|default(20)|int %}
+    # Size for small pattern box
+    {% set smallpatternsize = SMALLPATTERNSIZE|default(20)|int %}
+
+    # Large pattern
+        # Max positions, inset by BOUND
+        {% set x_min = printer.toolhead.axis_minimum.x + bound %}
+        {% set x_max = printer.toolhead.axis_maximum.x - bound %}
+        {% set y_min = printer.toolhead.axis_minimum.y + bound %}
+        {% set y_max = printer.toolhead.axis_maximum.y - bound %}
+
+    # Small pattern at center
+        # Find X/Y center point
+        {% set x_center = (printer.toolhead.axis_minimum.x|float + printer.toolhead.axis_maximum.x|float ) / 2 %}
+        {% set y_center = (printer.toolhead.axis_minimum.y|float + printer.toolhead.axis_maximum.y|float ) / 2 %}
+
+        # Set small pattern box around center point
+        {% set x_center_min = x_center - (smallpatternsize/2) %}
+        {% set x_center_max = x_center + (smallpatternsize/2) %}
+        {% set y_center_min = y_center - (smallpatternsize/2) %}
+        {% set y_center_max = y_center + (smallpatternsize/2) %}
+
+    # Save current gcode state (absolute/relative, etc)
+    SAVE_GCODE_STATE NAME=TEST_SPEED_state
+
+    # Output parameters to g-code terminal
+    { action_respond_info("TEST_SPEED: starting %d iterations at speed %d, accel %d" % (iterations, speed, accel)) }
+
+    # Home and get position for comparison later:
+        M400 # Finish moves - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/66
+        G28
+        # QGL if not already QGLd (only if QGL section exists in config)
+        {% if printer.configfile.settings.quad_gantry_level %}
+            {% if printer.quad_gantry_level.applied == False %}
+                QUAD_GANTRY_LEVEL
+                G28 Z
+            {% endif %}
+        {% endif %}
+        # Move 50mm away from max position and home again (to help with hall effect endstop accuracy - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/24)
+        G90
+        G1 X{printer.toolhead.axis_maximum.x-50} Y{printer.toolhead.axis_maximum.y-50} F{30*60}
+        M400 # Finish moves - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/66
+        G28 X Y
+        G0 X{printer.toolhead.axis_maximum.x-1} Y{printer.toolhead.axis_maximum.y-1} F{30*60}
+        G4 P1000
+        GET_POSITION
+
+    # Go to starting position
+    G0 X{x_min} Y{y_min} Z{bound + 10} F{speed*60}
+
+    # Set new limits
+    SET_VELOCITY_LIMIT VELOCITY={speed} ACCEL={accel}
+
+    {% for i in range(iterations) %}
+        # Large pattern diagonals
+        G0 X{x_min} Y{y_min} F{speed*60}
+        G0 X{x_max} Y{y_max} F{speed*60}
+        G0 X{x_min} Y{y_min} F{speed*60}
+        G0 X{x_max} Y{y_min} F{speed*60}
+        G0 X{x_min} Y{y_max} F{speed*60}
+        G0 X{x_max} Y{y_min} F{speed*60}
+
+        # Large pattern box
+        G0 X{x_min} Y{y_min} F{speed*60}
+        G0 X{x_min} Y{y_max} F{speed*60}
+        G0 X{x_max} Y{y_max} F{speed*60}
+        G0 X{x_max} Y{y_min} F{speed*60}
+
+        # Small pattern diagonals
+        G0 X{x_center_min} Y{y_center_min} F{speed*60}
+        G0 X{x_center_max} Y{y_center_max} F{speed*60}
+        G0 X{x_center_min} Y{y_center_min} F{speed*60}
+        G0 X{x_center_max} Y{y_center_min} F{speed*60}
+        G0 X{x_center_min} Y{y_center_max} F{speed*60}
+        G0 X{x_center_max} Y{y_center_min} F{speed*60}
+
+        # Small patternbox
+        G0 X{x_center_min} Y{y_center_min} F{speed*60}
+        G0 X{x_center_min} Y{y_center_max} F{speed*60}
+        G0 X{x_center_max} Y{y_center_max} F{speed*60}
+        G0 X{x_center_max} Y{y_center_min} F{speed*60}
+    {% endfor %}
+
+    # Restore max speed/accel to their configured values
+    SET_VELOCITY_LIMIT VELOCITY={printer.configfile.settings.printer.max_velocity} ACCEL={printer.configfile.settings.printer.max_accel}
+
+    # Re-home and get position again for comparison:
+        M400 # Finish moves - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/66
+        G28 # This is a full G28 to fix an issue with CoreXZ - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/12
+        # Go to XY home positions (in case your homing override leaves it elsewhere)
+        G90
+        G0 X{printer.toolhead.axis_maximum.x-1} Y{printer.toolhead.axis_maximum.y-1} F{30*60}
+        G4 P1000
+        GET_POSITION
+
+    # Restore previous gcode state (absolute/relative, etc)
+    RESTORE_GCODE_STATE NAME=TEST_SPEED_state
+
+
+{% endraw %}
+
+
+# --------------------------------------------------------------------------------------------------
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*#      -0.067500, -0.071250, -0.078750, -0.052500, -0.036250
+#*#      0.051250, 0.023750, 0.018750, 0.003750, 0.045000
+#*#      0.058750, 0.023750, 0.005000, -0.011250, 0.028750
+#*#      0.073750, 0.011250, -0.016250, -0.021250, 0.022500
+#*#      0.032500, -0.030000, -0.072500, -0.068750, -0.008750
+#*# x_count = 5
+#*# y_count = 5
+#*# mesh_x_pps = 2
+#*# mesh_y_pps = 2
+#*# algo = bicubic
+#*# tension = 0.2
+#*# min_x = 3.0
+#*# max_x = 198.0
+#*# min_y = 9.0
+#*# max_y = 204.0
+#*#
+#*# [skew_correction CaliFlower]
+#*# xy_skew = -0.0018968841197881435
+#*# xz_skew = 0.0
+#*# yz_skew = 0.0
