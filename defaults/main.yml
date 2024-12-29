@@ -41,5 +41,6 @@ klipper_printer_config: /home/{{ user }}/printer.cfg
 # Instance Parameters
 klipper_pip_umask: '{{ python_pip_umask }}'
 klipper_pip_environment: '{{ python_pip_environment }}'
+klipper_repository_url: https://github.com/Klipper3d/klipper
 
 ...

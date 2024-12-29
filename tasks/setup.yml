@@ -20,7 +20,7 @@
 - block:
     - name: Clone Klipper
       ansible.builtin.git:
-        repo: https://github.com/Klipper3d/klipper
+        repo: '{{ klipper_repository_url }}'
         dest: '{{ klipper_src_directory }}'
         force: true
         version: '{{ klipper_version }}'
